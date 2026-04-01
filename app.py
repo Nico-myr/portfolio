@@ -45,7 +45,7 @@ PROJECT_IMAGES: Dict[str, List[Path]] = {
 
 PROJECT_LINKS: Dict[str, str] = {
     "project_1": "https://your-project-1.streamlit.app",
-    "project_2": "https://your-project-2.streamlit.app",
+    "project_2": "https://featurestore-egfooc83xdtxubsfvyivyp.streamlit.app/",
     "project_3": "https://your-project-3.streamlit.app",
 }
 
