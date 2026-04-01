@@ -1,71 +1,59 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Dict, List
 
 import streamlit as st
 
 
-# ---------------------------
-# Configuration
-# ---------------------------
+# =========================
+# CONFIG
+# =========================
 st.set_page_config(page_title="Portfolio", layout="wide")
 
-PAGE_TITLE = "TITRE"
+PAGE_TITLE = "Data Scientist – Business & Economic Analytics"
+PRESENTATION_TEXT = """I am a Data Scientist specializing in business analytics, with a strong focus on transforming data into actionable business insights.
 
-PRESENTATION_TEXT = ("test")
+During my experience at EDF, I worked autonomously on critical data quality challenges related to HR data, directly impacting the reliability of key business indicators. I developed outlier detection and indicator classification models, which helped improve data consistency and made it easier for teams to use data for operational decision-making.
 
-# Path for CV
-CV_FR_PATH = Path("assets/cv/cv_fr.pdf")
+I also designed a proof of concept for a database aimed at structuring and historizing key indicators, with the goal of improving data reliability over time and reducing inconsistencies caused by manual processes. This work contributed to establishing a more robust and scalable data management approach.
+
+As part of the project, I supported the handover to industrialization teams by clearly presenting both technical and functional choices, ensuring a smooth transition and minimizing risks during the move to production.
+
+In parallel, I develop personal projects based on real-world use cases, particularly in forecasting, where I have improved model accuracy by significantly reducing prediction error, supporting better demand planning decisions.
+
+I am also continuously improving my skills through certifications in machine learning and MLOps, strengthening my ability to build reliable, high-performance solutions that can be effectively used in business environments.
+
+Today, I am looking to contribute to projects where data drives tangible business impact, combining analytical rigor, business understanding, and the ability to deliver operational solutions.
+"""
+
+CV_FR_PATH = Path("assets/cv/CV_MAYEUR_Nicolas.pdf")
 CV_EN_PATH = Path("assets/cv/cv_en.pdf")
 
-# Path image
-PROJECT_IMAGES: Dict[str, List[str]] = {
-    "project_1": [],
+PROJECT_IMAGES: Dict[str, List[Path]] = {
+    "project_1": [Path("assets/cv/slide/projet_1_Slide_1.png"),Path("assets/cv/slide/projet_1_Slide_2.png")],
     "project_2": [],
-    "project_3": [],
+    "project_3": [Path("assets/cv/slide/projet_3_Slide_1.png"),Path("assets/cv/slide/projet_3_Slide_2.png"),Path("assets/cv/slide/projet_3_Slide_3.png")],
 }
 
 
+# =========================
+# HELPERS
+# =========================
 def inject_css(css: str) -> None:
-    """Inject CSS into the Streamlit app.
-
-    Args:
-        css: CSS string to inject.
-    """
-    html = f"<style>{css}</style>"
-    if hasattr(st, "html"):
-        st.html(html)
-    else:
-        st.markdown(html, unsafe_allow_html=True)
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 
 @st.cache_data(show_spinner=False)
 def read_bytes(path: Path) -> bytes:
-    """Read file content as bytes.
-
-    Args:
-        path: File path.
-
-    Returns:
-        File content in bytes.
-    """
     return path.read_bytes()
 
 
 def truncate_text(text: str, max_chars: int = 360) -> str:
-    """Truncate text to a maximum number of characters.
-
-    Args:
-        text: Input text.
-        max_chars: Maximum number of characters.
-
-    Returns:
-        Truncated text.
-    """
     text = text.strip()
     if len(text) <= max_chars:
         return text
+
     cut = text[:max_chars]
     if " " in cut:
         cut = cut.rsplit(" ", 1)[0]
@@ -73,154 +61,202 @@ def truncate_text(text: str, max_chars: int = 360) -> str:
 
 
 def toggle_presentation() -> None:
-    """Toggle presentation state in session."""
     st.session_state.presentation_expanded = not st.session_state.presentation_expanded
 
 
-def try_uui_carousel(items: List[Dict[str, Any]], key: str) -> bool:
-    """Try to render a UUI carousel.
-
-    Args:
-        items: Carousel items.
-        key: Unique component key.
-
-    Returns:
-        True if carousel is used, False otherwise.
-    """
-    try:
-        from streamlit_carousel_uui import uui_carousel  # type: ignore
-    except Exception:
-        return False
-
-    uui_carousel(items=items, variant="md", key=key)
-    return True
+def render_section_label(label: str) -> None:
+    st.markdown(
+        f'<div class="section-label">{label}</div>',
+        unsafe_allow_html=True,
+    )
 
 
-# ---------------------------
-# State init
-# ---------------------------
+def render_project_carousel(
+    container_key: str,
+    project_title: str,
+    images: List[Path],
+    key_prefix: str,
+) -> None:
+    with st.container(key=container_key):
+        st.markdown(
+            f'<div class="project-title">{project_title}</div>',
+            unsafe_allow_html=True,
+        )
+
+        valid_images = [img for img in images if img.exists()]
+
+        if not valid_images:
+            st.markdown(
+                '<div class="empty-box">Aucune image disponible</div>',
+                unsafe_allow_html=True,
+            )
+            return
+
+        if len(valid_images) == 1:
+            st.image(str(valid_images[0]), use_container_width=True)
+            return
+
+        idx = st.slider(
+            "Image",
+            min_value=1,
+            max_value=len(valid_images),
+            value=1,
+            key=f"{key_prefix}_slider",
+            label_visibility="collapsed",
+        )
+        st.image(str(valid_images[idx - 1]), use_container_width=True)
+
+
+# =========================
+# SESSION STATE
+# =========================
 if "presentation_expanded" not in st.session_state:
     st.session_state.presentation_expanded = False
 
 
-# ---------------------------
-# Theme
-# ---------------------------
+# =========================
+# CSS
+# =========================
 CSS = """
 /* =========================
-   GLOBAL THEME
+   GLOBAL BACKGROUND
 ========================= */
 .stApp {
     background:
-        radial-gradient(circle at top left, rgba(0, 255, 255, 0.08), transparent 25%),
-        radial-gradient(circle at top right, rgba(255, 0, 255, 0.08), transparent 25%),
-        linear-gradient(180deg, #050816 0%, #090d1f 100%);
+        radial-gradient(circle at 10% 20%, rgba(0,255,255,0.08), transparent 25%),
+        radial-gradient(circle at 90% 10%, rgba(255,0,255,0.08), transparent 25%),
+        radial-gradient(circle at 50% 100%, rgba(0,150,255,0.08), transparent 35%),
+        linear-gradient(180deg, #03060f 0%, #050816 100%);
     color: #EAFBFF;
 }
 
 div.block-container {
+    max-width: 1200px;
     padding-top: 1.5rem;
     padding-bottom: 3rem;
-    max-width: 1400px;
 }
 
-/* Optional: hide Streamlit header spacing a bit */
 header[data-testid="stHeader"] {
     background: transparent;
 }
 
-/* =========================
-   TYPOGRAPHY
-========================= */
 html, body, [class*="css"] {
-    font-family: "Segoe UI", "Inter", sans-serif;
-}
-
-/* Left labels */
-.section-label {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #7DF9FF;
-    letter-spacing: 0.5px;
-    padding-top: 8px;
-    text-shadow: 0 0 8px rgba(125, 249, 255, 0.55);
+    font-family: "Inter", "Segoe UI", sans-serif;
 }
 
 /* =========================
-   TITLE BAR
+   SECTION LABELS CENTERED
 ========================= */
-.st-key-title_bar {
-    background: linear-gradient(90deg, #111a3a 0%, #1b1f5e 50%, #0f1d46 100%);
-    border: 1px solid rgba(0, 255, 255, 0.55);
-    border-radius: 18px;
-    padding: 18px 24px;
-    box-shadow:
-        0 0 12px rgba(0, 255, 255, 0.18),
-        0 0 28px rgba(123, 44, 255, 0.22),
-        inset 0 0 16px rgba(255, 255, 255, 0.03);
+.section-label {
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #00F5FF;
+    letter-spacing: 0.8px;
+    margin: 0.4rem 0 0.9rem 0;
+    text-shadow:
+        0 0 6px #00F5FF,
+        0 0 14px rgba(0,245,255,0.6);
 }
 
-.st-key-title_bar h1 {
+/* =========================
+   TITLE BOX
+========================= */
+.st-key-title_box {
+    background: linear-gradient(90deg, #0b1025, #111a3a, #0b1025);
+    border: 1px solid rgba(0,255,255,0.6);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 2rem;
+    box-shadow:
+        0 0 15px rgba(0,255,255,0.35),
+        0 0 40px rgba(123,44,255,0.25),
+        inset 0 0 20px rgba(255,255,255,0.03);
+    transition: all 0.3s ease;
+}
+
+.st-key-title_box:hover {
+    box-shadow:
+        0 0 25px rgba(0,255,255,0.6),
+        0 0 60px rgba(255,0,255,0.3);
+}
+
+.st-key-title_box h1 {
     margin: 0;
     text-align: center;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: #7DF9FF;
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #00F5FF;
     text-transform: uppercase;
     text-shadow:
-        0 0 8px rgba(125, 249, 255, 0.8),
-        0 0 18px rgba(125, 249, 255, 0.45),
-        0 0 28px rgba(255, 0, 255, 0.25);
+        0 0 10px #00F5FF,
+        0 0 25px rgba(0,245,255,0.7),
+        0 0 45px rgba(255,0,255,0.4);
 }
 
 /* =========================
-   PRESENTATION BOX
+   MAIN CARDS
 ========================= */
-.st-key-presentation_box {
-    background: linear-gradient(135deg, rgba(20, 20, 40, 0.95), rgba(10, 15, 30, 0.98));
-    border: 1px solid rgba(255, 0, 255, 0.45);
+.st-key-presentation_box,
+.st-key-cv_box,
+.st-key-project_1_box,
+.st-key-project_2_box,
+.st-key-project_3_box {
+    background: linear-gradient(180deg, rgba(8, 12, 25, 0.95), rgba(5, 8, 18, 1));
     border-radius: 18px;
-    padding: 18px 22px;
+    padding: 22px;
+    margin-bottom: 1.6rem;
+    border: 1px solid rgba(0,255,255,0.35);
     box-shadow:
-        0 0 12px rgba(255, 0, 255, 0.14),
-        0 0 28px rgba(0, 255, 255, 0.10);
+        0 0 12px rgba(0,255,255,0.18),
+        0 0 28px rgba(123,44,255,0.12),
+        inset 0 0 12px rgba(255,255,255,0.02);
+    transition: all 0.25s ease;
 }
 
-.st-key-presentation_box p {
-    color: #EAFBFF;
-    line-height: 1.7;
-    font-size: 1rem;
-}
-
-/* =========================
-   CV BOXES
-========================= */
-.st-key-cv_fr_wrap,
-.st-key-cv_en_wrap {
-    background: linear-gradient(135deg, rgba(8, 18, 28, 0.95), rgba(10, 22, 35, 0.98));
-    border: 1px solid rgba(57, 255, 20, 0.55);
-    border-radius: 16px;
-    padding: 16px;
+.st-key-presentation_box:hover,
+.st-key-cv_box:hover,
+.st-key-project_1_box:hover,
+.st-key-project_2_box:hover,
+.st-key-project_3_box:hover {
+    transform: translateY(-3px);
+    border: 1px solid rgba(255,0,255,0.7);
     box-shadow:
-        0 0 10px rgba(57, 255, 20, 0.16),
-        inset 0 0 10px rgba(57, 255, 20, 0.04);
+        0 0 20px rgba(0,255,255,0.4),
+        0 0 50px rgba(255,0,255,0.25),
+        inset 0 0 14px rgba(255,255,255,0.04);
 }
 
 /* =========================
-   PROJECT BOXES
+   TEXT
 ========================= */
-.st-key-project_1,
-.st-key-project_2,
-.st-key-project_3 {
-    background: linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(7, 10, 20, 1));
-    border: 1px solid rgba(0, 255, 255, 0.50);
-    border-radius: 18px;
-    padding: 16px;
-    box-shadow:
-        0 0 14px rgba(0, 255, 255, 0.14),
-        0 0 26px rgba(123, 44, 255, 0.12);
-    min-height: 360px;
+.presentation-text {
+    font-size: 1.02rem;
+    line-height: 1.75;
+    color: #DFFBFF;
+    margin-bottom: 1rem;
+}
+
+.project-title {
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #00F5FF;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 6px rgba(0,245,255,0.6);
+}
+
+/* =========================
+   EMPTY BOX
+========================= */
+.empty-box {
+    border: 1px dashed rgba(0,255,255,0.4);
+    border-radius: 14px;
+    padding: 1rem;
+    text-align: center;
+    color: #8bdcff;
+    background: rgba(0,255,255,0.02);
 }
 
 /* =========================
@@ -229,46 +265,26 @@ html, body, [class*="css"] {
 .stButton > button,
 .stDownloadButton > button {
     width: 100%;
-    border-radius: 12px !important;
-    border: 1px solid rgba(0, 255, 255, 0.65) !important;
-    background: linear-gradient(90deg, #091427 0%, #111f3f 100%) !important;
-    color: #7DF9FF !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(0,255,255,0.6) !important;
+    background: linear-gradient(90deg, #061225, #0d1f3f) !important;
+    color: #00F5FF !important;
     font-weight: 700 !important;
     letter-spacing: 0.4px;
     box-shadow:
-        0 0 8px rgba(0, 255, 255, 0.18),
-        inset 0 0 8px rgba(255, 255, 255, 0.03);
-    transition: all 0.25s ease-in-out;
+        0 0 10px rgba(0,255,255,0.3),
+        inset 0 0 10px rgba(255,255,255,0.04);
+    transition: all 0.25s ease;
 }
 
 .stButton > button:hover,
 .stDownloadButton > button:hover {
-    transform: translateY(-1px);
-    border: 1px solid rgba(255, 0, 255, 0.85) !important;
-    color: #FF7AF6 !important;
+    transform: translateY(-1px) scale(1.02);
+    border: 1px solid rgba(255,0,255,0.9) !important;
+    color: #FF4DFF !important;
     box-shadow:
-        0 0 10px rgba(255, 0, 255, 0.28),
-        0 0 22px rgba(0, 255, 255, 0.18);
-}
-
-/* Presentation toggle button spacing */
-.st-key-presentation_toggle button {
-    margin-top: 10px;
-}
-
-/* =========================
-   SLIDER FALLBACK
-========================= */
-[data-baseweb="slider"] {
-    padding-top: 0.8rem;
-    padding-bottom: 0.6rem;
-}
-
-/* =========================
-   CAPTIONS / INFO TEXT
-========================= */
-.stCaption, .stAlert {
-    color: #CDEEFF;
+        0 0 18px rgba(255,0,255,0.5),
+        0 0 35px rgba(0,255,255,0.4);
 }
 
 /* =========================
@@ -276,160 +292,126 @@ html, body, [class*="css"] {
 ========================= */
 img {
     border-radius: 14px;
+    box-shadow: 0 0 10px rgba(0,255,255,0.2);
 }
 
 /* =========================
-   OPTIONAL CYBER LINES EFFECT
+   SLIDER
 ========================= */
-.st-key-title_bar::before,
-.st-key-presentation_box::before,
-.st-key-project_1::before,
-.st-key-project_2::before,
-.st-key-project_3::before,
-.st-key-cv_fr_wrap::before,
-.st-key-cv_en_wrap::before {
-    content: "";
-    display: block;
-    height: 1px;
-    width: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0,255,255,0.7), transparent);
-    margin-bottom: 12px;
-    box-shadow: 0 0 8px rgba(0,255,255,0.4);
+[data-baseweb="slider"] {
+    padding-top: 0.4rem;
+    padding-bottom: 0.8rem;
 }
 """
 inject_css(CSS)
 
 
-# ---------------------------
-# Page organisation
-# ---------------------------
-
-# Title
+# =========================
+# TITLE
+# =========================
 left_spacer, title_col, right_spacer = st.columns([1, 6, 1])
+
 with title_col:
-    with st.container(key="title_bar"):
+    with st.container(key="title_box"):
         st.markdown(f"<h1>{PAGE_TITLE}</h1>", unsafe_allow_html=True)
 
-st.write("")
 
-# --- Presentation ---
-label_col, content_col = st.columns([1, 6])
-with label_col:
-    st.markdown('<div class="section-label">Presentation</div>', unsafe_allow_html=True)
+# =========================
+# PRESENTATION
+# =========================
+_, center_col, _ = st.columns([1, 6, 1])
 
-with content_col:
+with center_col:
+    render_section_label("Présentation")
+
     with st.container(key="presentation_box"):
         text_to_show = (
             PRESENTATION_TEXT
             if st.session_state.presentation_expanded
             else truncate_text(PRESENTATION_TEXT)
         )
-        st.markdown(text_to_show)
+
+        st.markdown(
+            f'<div class="presentation-text">{text_to_show}</div>',
+            unsafe_allow_html=True,
+        )
+
         st.button(
             "Voir moins" if st.session_state.presentation_expanded else "Voir plus",
             key="presentation_toggle",
             on_click=toggle_presentation,
         )
 
-st.write("")
 
-# --- My CV ---
-label_col, content_col = st.columns([1, 6])
-with label_col:
-    st.markdown('<div class="section-label">My CV</div>', unsafe_allow_html=True)
+# =========================
+# CV
+# =========================
+_, center_col, _ = st.columns([1, 6, 1])
 
-with content_col:
-    b1, b2, _ = st.columns([1, 1, 2])
+with center_col:
+    render_section_label("My CV")
 
-    # CV français
-    with b1:
-        with st.container(key="cv_fr_wrap"):
-            exists = CV_FR_PATH.exists()
-            data = read_bytes(CV_FR_PATH) if exists else b""
+    with st.container(key="cv_box"):
+        col1, col2 = st.columns(2, gap="large")
+
+        with col1:
+            exists_fr = CV_FR_PATH.exists()
+            data_fr = read_bytes(CV_FR_PATH) if exists_fr else b""
+
             st.download_button(
                 "CV français",
-                data=data,
-                file_name="CV_francais.pdf",
+                data=data_fr,
+                file_name="CV_MAYEUR_Nicolas.pdf",
                 mime="application/pdf",
+                disabled=not exists_fr,
                 key="cv_fr_button",
-                on_click="ignore",
-                disabled=not exists,
-                width="stretch",
             )
-            if not exists:
-                st.caption("Fichier manquant : assets/cv/cv_fr.pdf")
 
-    # English CV
-    with b2:
-        with st.container(key="cv_en_wrap"):
-            exists = CV_EN_PATH.exists()
-            data = read_bytes(CV_EN_PATH) if exists else b""
+            if not exists_fr:
+                st.caption("Fichier manquant : assets/cv/CV_MAYEUR_Nicolas.pdf")
+
+        with col2:
+            exists_en = CV_EN_PATH.exists()
+            data_en = read_bytes(CV_EN_PATH) if exists_en else b""
+
             st.download_button(
                 "English CV",
-                data=data,
-                file_name="English_CV.pdf",
+                data=data_en,
+                file_name="CV_MAYEUR_Nicolas_EN.pdf",
                 mime="application/pdf",
+                disabled=not exists_en,
                 key="cv_en_button",
-                on_click="ignore",
-                disabled=not exists,
-                width="stretch",
             )
-            if not exists:
+
+            if not exists_en:
                 st.caption("Fichier manquant : assets/cv/cv_en.pdf")
 
-st.write("")
 
-# --- My projets ---
-label_col, content_col = st.columns([1, 6])
-with label_col:
-    st.markdown('<div class="section-label">Mes projets</div>', unsafe_allow_html=True)
+# =========================
+# PROJECTS
+# =========================
+_, center_col, _ = st.columns([1, 6, 1])
 
-with content_col:
-    c1, c2, c3 = st.columns(3, gap="large")
+with center_col:
+    render_section_label("Mes projets")
 
-    def render_project_zone(container_key: str, carousel_key: str, images: List[str]) -> None:
-        with st.container(key=container_key):
+    render_project_carousel(
+        container_key="project_1_box",
+        project_title="Projet 1",
+        images=PROJECT_IMAGES.get("project_1", []),
+        key_prefix="project_1",
+    )
 
-            if not images:
-                st.info("Aucune image disponible")
-                return
+    render_project_carousel(
+        container_key="project_2_box",
+        project_title="Projet 2",
+        images=PROJECT_IMAGES.get("project_2", []),
+        key_prefix="project_2",
+    )
 
-            try:
-                from streamlit_carousel_uui import uui_carousel
-
-                items = [
-                    {
-                        "title": f"Image {i+1}",
-                        "img": img,
-                    }
-                    for i, img in enumerate(images)
-                ]
-
-                uui_carousel(
-                    items=items,
-                    variant="card",   # style moderne
-                    key=carousel_key,
-                )
-
-            except Exception:
-            # fallback si package non installé
-                st.warning("Installe streamlit-carousel-uui pour un vrai carrousel")
-                idx = st.slider(
-                    "Image",
-                    1,
-                    len(images),
-                    1,
-                    key=f"{carousel_key}_fallback",
-                    label_visibility="collapsed",
-                )
-                st.image(images[idx - 1], use_container_width=True)
-
-
-    with c1:
-        render_project_zone("project_1", "carousel_1", PROJECT_IMAGES.get("project_1", []))
-
-    with c2:
-        render_project_zone("project_2", "carousel_2", PROJECT_IMAGES.get("project_2", []))
-
-    with c3:
-        render_project_zone("project_3", "carousel_3", PROJECT_IMAGES.get("project_3", []))
+    render_project_carousel(
+        container_key="project_3_box",
+        project_title="Projet 3",
+        images=PROJECT_IMAGES.get("project_3", []),
+        key_prefix="project_3",
+    )
