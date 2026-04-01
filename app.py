@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import streamlit as st
 
@@ -31,9 +31,28 @@ CV_FR_PATH = Path("assets/cv/CV_MAYEUR_Nicolas.pdf")
 CV_EN_PATH = Path("assets/cv/cv_en.pdf")
 
 PROJECT_IMAGES: Dict[str, List[Path]] = {
-    "project_1": [Path("assets/cv/slide/projet_1_Slide_1.png"),Path("assets/cv/slide/projet_1_Slide_2.png")],
+    "project_1": [
+        Path("assets/cv/slide/project_1_Slide_1.png"),
+        Path("assets/cv/slide/project_1_Slide_2.png"),
+    ],
     "project_2": [],
-    "project_3": [Path("assets/cv/slide/projet_3_Slide_1.png"),Path("assets/cv/slide/projet_3_Slide_2.png"),Path("assets/cv/slide/projet_3_Slide_3.png")],
+    "project_3": [
+        Path("assets/cv/slide/project_3_Slide_1.png"),
+        Path("assets/cv/slide/project_3_Slide_2.png"),
+        Path("assets/cv/slide/project_3_Slide_3.png"),
+    ],
+}
+
+PROJECT_LINKS: Dict[str, str] = {
+    "project_1": "https://your-project-1.streamlit.app",
+    "project_2": "https://your-project-2.streamlit.app",
+    "project_3": "https://your-project-3.streamlit.app",
+}
+
+PROJECT_TITLES: Dict[str, str] = {
+    "project_1": "Project 1",
+    "project_2": "Project 2",
+    "project_3": "Project 3",
 }
 
 
@@ -76,12 +95,22 @@ def render_project_carousel(
     project_title: str,
     images: List[Path],
     key_prefix: str,
+    project_url: Optional[str] = None,
 ) -> None:
     with st.container(key=container_key):
         st.markdown(
             f'<div class="project-title">{project_title}</div>',
             unsafe_allow_html=True,
         )
+
+        if project_url:
+            btn_left, btn_center, btn_right = st.columns([2, 3, 2])
+            with btn_center:
+                st.link_button(
+                    "Open project",
+                    project_url,
+                    use_container_width=True,
+                )
 
         valid_images = [img for img in images if img.exists()]
 
@@ -96,15 +125,38 @@ def render_project_carousel(
             st.image(str(valid_images[0]), use_container_width=True)
             return
 
-        idx = st.slider(
-            "Image",
-            min_value=1,
-            max_value=len(valid_images),
-            value=1,
-            key=f"{key_prefix}_slider",
-            label_visibility="collapsed",
-        )
-        st.image(str(valid_images[idx - 1]), use_container_width=True)
+        state_key = f"{key_prefix}_index"
+        if state_key not in st.session_state:
+            st.session_state[state_key] = 0
+
+        current_idx = st.session_state[state_key]
+
+        nav_col_left, nav_col_center, nav_col_right = st.columns([1, 8, 1])
+
+        with nav_col_left:
+            if st.button("⬅️", key=f"{key_prefix}_prev"):
+                st.session_state[state_key] = (
+                    st.session_state[state_key] - 1
+                ) % len(valid_images)
+                current_idx = st.session_state[state_key]
+
+        with nav_col_right:
+            if st.button("➡️", key=f"{key_prefix}_next"):
+                st.session_state[state_key] = (
+                    st.session_state[state_key] + 1
+                ) % len(valid_images)
+                current_idx = st.session_state[state_key]
+
+        with nav_col_center:
+            st.image(str(valid_images[current_idx]), use_container_width=True)
+            st.markdown(
+                f"""
+                <div class="carousel-counter">
+                    Image {current_idx + 1} / {len(valid_images)}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 # =========================
@@ -243,8 +295,15 @@ html, body, [class*="css"] {
     font-size: 1.15rem;
     font-weight: 700;
     color: #00F5FF;
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
     text-shadow: 0 0 6px rgba(0,245,255,0.6);
+}
+
+.carousel-counter {
+    text-align: center;
+    color: #8bdcff;
+    margin-top: 0.55rem;
+    font-size: 0.95rem;
 }
 
 /* =========================
@@ -260,7 +319,7 @@ html, body, [class*="css"] {
 }
 
 /* =========================
-   BUTTONS
+   BUTTONS (UNIFIED STYLE)
 ========================= */
 .stButton > button,
 .stDownloadButton > button {
@@ -277,14 +336,43 @@ html, body, [class*="css"] {
     transition: all 0.25s ease;
 }
 
+a[data-testid="stLinkButton"] {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    width: 100% !important;
+    padding: 0.6rem 1rem !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(0,255,255,0.6) !important;
+    background: linear-gradient(90deg, #061225, #0d1f3f) !important;
+    color: #00F5FF !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px;
+    text-decoration: none !important;
+    box-shadow:
+        0 0 10px rgba(0,255,255,0.3),
+        inset 0 0 10px rgba(255,255,255,0.04);
+    transition: all 0.25s ease;
+}
+
 .stButton > button:hover,
-.stDownloadButton > button:hover {
+.stDownloadButton > button:hover,
+a[data-testid="stLinkButton"]:hover {
     transform: translateY(-1px) scale(1.02);
     border: 1px solid rgba(255,0,255,0.9) !important;
     color: #FF4DFF !important;
     box-shadow:
         0 0 18px rgba(255,0,255,0.5),
         0 0 35px rgba(0,255,255,0.4);
+    text-decoration: none !important;
+}
+
+/* =========================
+   ARROW BUTTONS
+========================= */
+div[data-testid="column"] .stButton > button {
+    min-height: 56px;
+    font-size: 1.25rem !important;
 }
 
 /* =========================
@@ -293,14 +381,6 @@ html, body, [class*="css"] {
 img {
     border-radius: 14px;
     box-shadow: 0 0 10px rgba(0,255,255,0.2);
-}
-
-/* =========================
-   SLIDER
-========================= */
-[data-baseweb="slider"] {
-    padding-top: 0.4rem;
-    padding-bottom: 0.8rem;
 }
 """
 inject_css(CSS)
@@ -322,7 +402,7 @@ with title_col:
 _, center_col, _ = st.columns([1, 6, 1])
 
 with center_col:
-    render_section_label("Présentation")
+    render_section_label("Presentation")
 
     with st.container(key="presentation_box"):
         text_to_show = (
@@ -349,7 +429,7 @@ with center_col:
 _, center_col, _ = st.columns([1, 6, 1])
 
 with center_col:
-    render_section_label("My CV")
+    render_section_label("My CVs")
 
     with st.container(key="cv_box"):
         col1, col2 = st.columns(2, gap="large")
@@ -393,25 +473,28 @@ with center_col:
 _, center_col, _ = st.columns([1, 6, 1])
 
 with center_col:
-    render_section_label("Mes projets")
+    render_section_label("My projects")
 
     render_project_carousel(
         container_key="project_1_box",
-        project_title="Projet 1",
+        project_title=PROJECT_TITLES["project_1"],
         images=PROJECT_IMAGES.get("project_1", []),
         key_prefix="project_1",
+        project_url=PROJECT_LINKS.get("project_1"),
     )
 
     render_project_carousel(
         container_key="project_2_box",
-        project_title="Projet 2",
+        project_title=PROJECT_TITLES["project_2"],
         images=PROJECT_IMAGES.get("project_2", []),
         key_prefix="project_2",
+        project_url=PROJECT_LINKS.get("project_2"),
     )
 
     render_project_carousel(
         container_key="project_3_box",
-        project_title="Projet 3",
+        project_title=PROJECT_TITLES["project_3"],
         images=PROJECT_IMAGES.get("project_3", []),
         key_prefix="project_3",
+        project_url=PROJECT_LINKS.get("project_3"),
     )
